@@ -1,0 +1,22 @@
+name: CI Build
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+      
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v1.4.0
+      with:
+        dotnet-version: 3.1.101
+    - name: Restore Dependencies
+      run: dotnet restore
+    - name: Build Solution
+      run: dotnet build
+    - name: Run Unit Tests
+      run: dotnet test
