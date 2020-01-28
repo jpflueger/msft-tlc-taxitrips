@@ -6,15 +6,24 @@
 
         public int DropOffLocationId { get; set; }
 
+        public VehicleType? VehicleType { get; set; }
+
         public (string sql, object pars) ToSql()
         {
-            return (
-                @"SELECT 
+            string sql = @"SELECT 
 	                avg(DropOffTimestamp - PickUpTimestamp) as AverageDurationSeconds,
 	                avg(Cost) as AverageCost
                 FROM TaxiTrip
-                WHERE PickUpLocationId = @pickUpLocationId and DropOffLocationId = @dropOffLocationId", 
-                new { pickUpLocationId = PickUpLocationId, dropOffLocationId = DropOffLocationId });
+                WHERE PickUpLocationId = @pickUpLocationId and DropOffLocationId = @dropOffLocationId";
+            dynamic param = new { pickUpLocationId = PickUpLocationId, dropOffLocationId = DropOffLocationId };
+
+            if (!VehicleType.HasValue)
+            {
+                sql += " and VehicleType = @vehicleType";
+                param.vehicleType = (int)VehicleType.Value;
+            }
+            
+            return (sql, param);
         }
     }
 }
