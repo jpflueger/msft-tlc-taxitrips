@@ -1,27 +1,32 @@
 BEGIN TRANSACTION;
-DROP TABLE IF EXISTS "TaxiTrip";
-CREATE TABLE IF NOT EXISTS "TaxiTrip" (
-	"PickUpDateTime"	DATETIME,
-	"DropOffDateTime"	DATETIME,
-	"PickUpLocationId"	BIGINT,
-	"DropOffLocationId"	BIGINT,
-	"Cost"	FLOAT,
-	"VehicleType"	BIGINT,
-	"Duration"	BIGINT
-);
-DROP TABLE IF EXISTS "TaxiZone";
+
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE IF NOT EXISTS "TaxiZone" (
-	"LocationId"	INTEGER,
+	"Id"		INTEGER,
 	"Borough"	TEXT,
-	"Zone"	TEXT
-);
-DROP INDEX IF EXISTS "idx_TaxiZone_PK";
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_TaxiZone_PK" ON "TaxiZone" (
-	"LocationId"	ASC
-);
-DROP INDEX IF EXISTS "idx_TaxiTrip_Locations";
+	"Zone"		TEXT,
+	PRIMARY KEY("Id")
+) WITHOUT ROWID;
+
+CREATE TABLE IF NOT EXISTS "TaxiTrip" (
+	"Id"				INTEGER,
+	"PickUpTimestamp"	INTEGER NOT NULL,
+	"DropOffTimestamp"	INTEGER NOT NULL,
+	"PickUpLocationId"	INTEGER NOT NULL,
+	"DropOffLocationId"	INTEGER NOT NULL,
+	"VehicleType"		INTEGER NOT NULL,
+	"Cost"				FLOAT,
+	PRIMARY KEY("Id"),
+	FOREIGN KEY("PickUpLocationId") REFERENCES TaxiZone(Id),
+	FOREIGN KEY("DropOffLocationId") REFERENCES TaxiZone(Id)
+) WITHOUT ROWID;
+
 CREATE INDEX IF NOT EXISTS "idx_TaxiTrip_Locations" ON "TaxiTrip" (
 	"PickUpLocationId"	ASC,
-	"DropOffLocationId"	ASC
+	"DropOffLocationId"	ASC,
+	"PickUpTimestamp" ASC,
+	"DropOffTimestamp" ASC
 );
+
 COMMIT;
