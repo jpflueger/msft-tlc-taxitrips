@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
@@ -15,17 +16,38 @@ namespace TLC.Taxi.Data.Console
             var app = new CommandLineApplication()
             {
                 Name = "taxi",
-                Description = "Predict taxi rides in NYC."
+                Description = "Predict taxi rides in NYC.",
             };
 
-            app.Command("boroughs", async (command) => 
+            app.Command("boroughs", (command) => 
             {
-                var repo = new SqliteRepository<TaxiZone, short>(DbPath);
-                var zones = await repo.GetAllAsync();
-                foreach (var zone in zones)
+                var queryOption = command.Option<string>("-q|--query <QUERY>", "A query string to fuzzy search with", CommandOptionType.SingleOrNoValue);
+
+                command.OnExecuteAsync(async (ct) =>
                 {
-                    System.Console.WriteLine($" [{zone.Id}]: {zone.Zone}, {zone.Borough}");
-                }
+                    try
+                    {
+                        var repo = new SqliteRepository<TaxiZone, short>(DbPath);
+                        var zones = await repo.GetAllAsync();
+
+                        if (!string.IsNullOrEmpty(queryOption.ParsedValue))
+                        {
+                            zones = zones.Where(z => z.Borough.StartsWith(queryOption.ParsedValue));
+                        }
+
+                        foreach (var zone in zones)
+                        {
+                            System.Console.WriteLine($" [{zone.Id}]: {zone.Zone}, {zone.Borough}");
+                        }
+
+                        return 0;
+                    }
+                    catch (Exception e)
+                    {
+                        System.Console.Error.WriteLine(e.ToString());
+                        return -1;
+                    }
+                });
             });
 
             app.Command("predict", (command) => 
@@ -36,19 +58,29 @@ namespace TLC.Taxi.Data.Console
 
                 command.OnExecuteAsync(async (ct) => 
                 {
-                    var repo = new SqliteRepository<TaxiTrip, long>(DbPath);
-                    var query = new TaxiTripMetricsQuery
+                    try
                     {
-                        PickUpLocationId = pickUpArgument.ParsedValue,
-                        DropOffLocationId = dropOffArgument.ParsedValue,
-                        VehicleType = vehicleOption.ParsedValue
-                    };
-                    var results = await repo.QueryAsync<TaxiTripMetrics>(query, ct);
-                    var metrics = results.SingleOrDefault();
-                    System.Console.WriteLine($"Estimated Cost =>     ${metrics.AverageCost:0.00}");
-                    System.Console.WriteLine($"Estimated Duration =>  {TimeSpan.FromSeconds(metrics.AverageDurationSeconds)}");
-                    
-                    return 0;
+                        var repo = new SqliteRepository<TaxiTrip, long>(DbPath);
+                        var query = new TaxiTripMetricsQuery
+                        {
+                            PickUpLocationId = pickUpArgument.ParsedValue,
+                            DropOffLocationId = dropOffArgument.ParsedValue,
+                            VehicleType = vehicleOption.ParsedValue
+                        };
+                        
+                        IEnumerable<TaxiTripMetrics> results = await repo.QueryAsync<TaxiTripMetrics>(query, ct);
+                        TaxiTripMetrics metrics = results.SingleOrDefault();
+
+                        System.Console.WriteLine($"Estimated Cost =>     ${metrics.AverageCost:0.00}");
+                        System.Console.WriteLine($"Estimated Duration =>  {TimeSpan.FromSeconds(metrics.AverageDurationSeconds)}");
+
+                        return 0;
+                    }
+                    catch (Exception e)
+                    {
+                        System.Console.Error.WriteLine(e.ToString());
+                        return -1;
+                    }
                 });
             });
 
