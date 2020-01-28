@@ -5,12 +5,26 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
+using TLC.Taxi.Data.Models;
 using Xunit;
 
 namespace TLC.Taxi.Data.Test
 {
     public class SqliteRepositoryFixture : IDisposable
     {
+        public class TestTableCountQuery : IQuery<TestTable, int>
+        {
+            public (string sql, object pars) ToSql()
+            {
+                return ("SELECT count(*) as Count FROM TestTable", null);
+            }
+        }
+
+        public class TestTableCountQueryResponse
+        {
+            public int Count { get; set; }
+        }
+
         private readonly string _tempDbPath;
 
         public SqliteRepositoryFixture()
@@ -112,6 +126,35 @@ namespace TLC.Taxi.Data.Test
             Assert.Equal(expected1.Message, actual1.Message);
             Assert.Equal(expected2.Id, actual2.Id);
             Assert.Equal(expected2.Message, actual2.Message);
+        }
+
+        [Fact]
+        public async Task Query()
+        {
+            //Given
+            var repo = new SqliteRepository<TestTable, int>(_tempDbPath);
+            TestTable expected1 = TestTable.Generate();
+            TestTable expected2 = TestTable.Generate();
+
+            //When
+            TestTableCountQueryResponse actual = null;
+            using (var conn = await repo.OpenAsync(CancellationToken.None))
+            {
+                await TestTable.CreateTableAsync(conn);
+
+                await expected1.InsertAsync(conn);
+                await expected2.InsertAsync(conn);
+
+                actual = await repo
+                    .QueryAsync<TestTableCountQueryResponse>(new TestTableCountQuery())
+                    .SingleOrDefaultAsync();
+
+                await TestTable.DropAsync(conn);
+            }
+
+            //Then
+            Assert.NotNull(actual);
+            Assert.Equal(2, actual.Count);
         }
     }
 }

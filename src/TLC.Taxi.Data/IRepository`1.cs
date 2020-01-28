@@ -12,6 +12,6 @@ namespace TLC.Taxi.Data
 
         IAsyncEnumerable<TEntity> GetAllAsync(CancellationToken ct);
 
-        IAsyncEnumerable<TEntity> QueryAsync(IQuery<TEntity, TKey> query, CancellationToken ct);
+        IAsyncEnumerable<T> QueryAsync<T>(IQuery<TEntity, TKey> query, CancellationToken ct);
     }
 }
