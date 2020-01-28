@@ -1,49 +1,90 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TLC.Taxi.Data;
+using McMaster.Extensions.CommandLineUtils;
 using TLC.Taxi.Data.Models;
 
 namespace TLC.Taxi.Data.Console
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static readonly string DbPath = "./Assets/tripdata.db3";
+
+        public static int Main(string[] args)
         {
-            if (args.Length == 0)
+            var app = new CommandLineApplication()
             {
-                return;
-            }
+                Name = "taxi",
+                Description = "Predict taxi rides in NYC.",
+            };
 
-            Execute(args).Wait();
-        }
-
-        static async Task Execute(string[] args)
-        {
-            string dbPath = "./Assets/tripdata.db3";
-            SqliteRepository<TaxiZone, short> zoneRepo = new SqliteRepository<TaxiZone, short>(dbPath);
-            SqliteRepository<TaxiTrip, long> tripRepo = new SqliteRepository<TaxiTrip, long>(dbPath);
-
-            if (args[0] == "zones")
+            app.Command("boroughs", (command) => 
             {
-                var zones = await zoneRepo.GetAllAsync();
-                foreach (var zone in zones)
+                var queryOption = command.Option<string>("-q|--query <QUERY>", "A query string to fuzzy search with", CommandOptionType.SingleOrNoValue);
+
+                command.OnExecuteAsync(async (ct) =>
                 {
-                    System.Console.WriteLine($"{zone.Borough} {zone.Zone}");
-                }
-            }
-            else if (args.Length == 3 && args[0] == "trip" && int.TryParse(args[1], out int pickUpLocationId) && int.TryParse(args[2], out int dropOffLocationId))
+                    try
+                    {
+                        var repo = new SqliteRepository<TaxiZone, short>(DbPath);
+                        var zones = await repo.GetAllAsync();
+
+                        if (!string.IsNullOrEmpty(queryOption.ParsedValue))
+                        {
+                            zones = zones.Where(z => z.Borough.StartsWith(queryOption.ParsedValue));
+                        }
+
+                        foreach (var zone in zones)
+                        {
+                            System.Console.WriteLine($" [{zone.Id}]: {zone.Zone}, {zone.Borough}");
+                        }
+
+                        return 0;
+                    }
+                    catch (Exception e)
+                    {
+                        System.Console.Error.WriteLine(e.ToString());
+                        return -1;
+                    }
+                });
+            });
+
+            app.Command("predict", (command) => 
             {
-                var query = new TaxiTripMetricsQuery
+                var pickUpArgument = command.Argument<short>("[pick-up]", "Where you will be picked up from.");
+                var dropOffArgument = command.Argument<short>("[drop-off]", "Where you will be dropped of at.");
+                var vehicleOption = command.Option<VehicleType>("-v|--vehicle <VEHICLE>", "The type of vehicle to take", CommandOptionType.SingleValue);
+
+                command.OnExecuteAsync(async (ct) => 
                 {
-                    PickUpLocationId = pickUpLocationId,
-                    DropOffLocationId = dropOffLocationId
-                };
-                var results = await tripRepo.QueryAsync<TaxiTripMetrics>(query);
-                var metrics = results.SingleOrDefault();
-                System.Console.WriteLine($"Average Duration =  {TimeSpan.FromSeconds(metrics.AverageDurationSeconds)}");
-                System.Console.WriteLine($"Average Cost     = ${metrics.AverageCost:0.00}");
-            }
+                    try
+                    {
+                        var repo = new SqliteRepository<TaxiTrip, long>(DbPath);
+                        var query = new TaxiTripMetricsQuery
+                        {
+                            PickUpLocationId = pickUpArgument.ParsedValue,
+                            DropOffLocationId = dropOffArgument.ParsedValue,
+                            VehicleType = vehicleOption.ParsedValue
+                        };
+                        
+                        IEnumerable<TaxiTripMetrics> results = await repo.QueryAsync<TaxiTripMetrics>(query, ct);
+                        TaxiTripMetrics metrics = results.SingleOrDefault();
+
+                        System.Console.WriteLine($"Estimated Cost =>     ${metrics.AverageCost:0.00}");
+                        System.Console.WriteLine($"Estimated Duration =>  {TimeSpan.FromSeconds(metrics.AverageDurationSeconds)}");
+
+                        return 0;
+                    }
+                    catch (Exception e)
+                    {
+                        System.Console.Error.WriteLine(e.ToString());
+                        return -1;
+                    }
+                });
+            });
+
+            return app.Execute(args);
         }
     }
 }
