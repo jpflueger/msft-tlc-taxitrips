@@ -28,27 +28,21 @@ namespace TLC.Taxi.Data
             }
         }
 
-        public async IAsyncEnumerable<TEntity> GetAllAsync([EnumeratorCancellation] CancellationToken ct = default)
+        public async Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken ct = default)
         {
             using (DbConnection conn = await OpenAsync(ct))
             {
                 string sql = $"SELECT * FROM {_tableName}";
-                foreach (TEntity entity in await conn.QueryAsync<TEntity>(sql, ct).ConfigureAwait(false))
-                {
-                    yield return entity;
-                }
+                return await conn.QueryAsync<TEntity>(sql, ct).ConfigureAwait(false);
             }
         }
 
-        public async IAsyncEnumerable<T> QueryAsync<T>(IQuery<TEntity, TKey> query, [EnumeratorCancellation] CancellationToken ct = default)
+        public async Task<IEnumerable<T>> QueryAsync<T>(IQuery<TEntity, TKey> query, CancellationToken ct = default)
         {
             using (DbConnection conn = await OpenAsync(ct).ConfigureAwait(false))
             {
                 (string sql, object pars) = query.ToSql();
-                foreach (T row in await conn.QueryAsync<T>(sql, ct).ConfigureAwait(false))
-                {
-                    yield return row;
-                }
+                return await conn.QueryAsync<T>(sql, pars).ConfigureAwait(false);
             }
         }
 

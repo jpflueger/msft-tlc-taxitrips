@@ -1,8 +1,8 @@
 namespace TLC.Taxi.Data.Models
 {
-    public class TaxiZone
+    public class TaxiZone : IEntity<short>
     {
-        public short LocationId { get; set; }
+        public short Id { get; set; }
 
         public string Borough { get; set; }
 

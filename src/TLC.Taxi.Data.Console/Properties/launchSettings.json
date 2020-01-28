@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TLC.Taxi.Data.Console": {
+      "commandName": "Project",
+      "commandLineArgs": "trip 254 254"
+    }
+  }
+}

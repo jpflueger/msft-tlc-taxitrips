@@ -10,8 +10,8 @@ namespace TLC.Taxi.Data
     {
         Task<TEntity> GetAsync(TKey key, CancellationToken ct);
 
-        IAsyncEnumerable<TEntity> GetAllAsync(CancellationToken ct);
+        Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken ct);
 
-        IAsyncEnumerable<T> QueryAsync<T>(IQuery<TEntity, TKey> query, CancellationToken ct);
+        Task<IEnumerable<T>> QueryAsync<T>(IQuery<TEntity, TKey> query, CancellationToken ct);
     }
 }

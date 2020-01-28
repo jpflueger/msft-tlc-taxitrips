@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -112,7 +111,7 @@ namespace TLC.Taxi.Data.Test
                 await expected1.InsertAsync(conn);
                 await expected2.InsertAsync(conn);
 
-                var actual = await repo.GetAllAsync().ToListAsync();
+                var actual = await repo.GetAllAsync();
                 actual1 = actual.SingleOrDefault(x => x.Id == expected1.Id);
                 actual2 = actual.SingleOrDefault(x => x.Id == expected2.Id);
 
@@ -145,9 +144,8 @@ namespace TLC.Taxi.Data.Test
                 await expected1.InsertAsync(conn);
                 await expected2.InsertAsync(conn);
 
-                actual = await repo
-                    .QueryAsync<TestTableCountQueryResponse>(new TestTableCountQuery())
-                    .SingleOrDefaultAsync();
+                var list = await repo.QueryAsync<TestTableCountQueryResponse>(new TestTableCountQuery());
+                actual = list.SingleOrDefault();
 
                 await TestTable.DropAsync(conn);
             }

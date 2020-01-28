@@ -1,8 +1,6 @@
-using System;
-
 namespace TLC.Taxi.Data.Models
 {
-    public class TaxiTrip
+    public class TaxiTrip : IEntity<long>
     {
         public long Id { get; set; }
 
