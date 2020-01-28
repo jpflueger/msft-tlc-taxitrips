@@ -2,6 +2,7 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
+using TLC.Taxi.Data.Models;
 
 namespace TLC.Taxi.Data
 {
@@ -12,7 +13,7 @@ namespace TLC.Taxi.Data
 
         public SqliteRepository(string dbPath = null)
         {
-            // default to in-memory database if no file-path supplied
+            // empty data-source creates a temporary database
             var builder = new SqliteConnectionStringBuilder()
             {
                 DataSource = dbPath ?? ":memory:",

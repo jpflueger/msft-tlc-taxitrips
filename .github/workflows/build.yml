@@ -26,6 +26,6 @@ jobs:
         # Repository upload token - get it from codecov.io
         token: ${{ secrets.CODECOV_TOKEN }}
         # Path to coverage file to upload
-        file: ./test/TestResults/TLC.Taxi.Data.Test.opencover.xml
+        file: ./test/TestResults/TLC.Taxi.Data.Test.lcov.info
         # Flag upload to group coverage metrics (e.g. unittests | integration | ui,chrome)
         flags: unittests

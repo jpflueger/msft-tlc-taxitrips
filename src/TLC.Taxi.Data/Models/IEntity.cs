@@ -1,4 +1,4 @@
-namespace TLC.Taxi.Data
+namespace TLC.Taxi.Data.Models
 {
     public interface IEntity<TKey>
     {

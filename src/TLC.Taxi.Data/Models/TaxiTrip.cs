@@ -1,6 +1,6 @@
 using System;
 
-namespace TLC.Taxi.Data
+namespace TLC.Taxi.Data.Models
 {
     public class TaxiTrip
     {

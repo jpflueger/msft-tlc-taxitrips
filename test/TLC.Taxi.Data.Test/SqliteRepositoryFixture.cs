@@ -1,47 +1,49 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Bogus;
 using Dapper;
 using Xunit;
 
 namespace TLC.Taxi.Data.Test
 {
-    public class SqliteRepositoryFixture 
+    public class SqliteRepositoryFixture : IDisposable
     {
-        public class TestTable : IEntity<int>
-        {
-            public int Id { get; set; }
+        private readonly string _tempDbPath;
 
-            public string Message { get; set; }
+        public SqliteRepositoryFixture()
+        {
+            _tempDbPath = Path.ChangeExtension(Path.GetTempFileName(), ".db3");
         }
 
-        private readonly Faker _faker = new Faker();
+        public void Dispose()
+        {
+            if (File.Exists(_tempDbPath))
+            {
+                File.Delete(_tempDbPath);
+            }
+        }
 
         [Fact]
         public async Task Ctor_Null_Opens_InMemory()
         {
             //Given
             var repo = new SqliteRepository<TestTable, int>(null);
-            TestTable expected = Generate();
+            TestTable expected = TestTable.Generate();
 
             //When
             TestTable actual = null;
             using (var conn = await repo.OpenAsync(CancellationToken.None))
             {
-                await conn.ExecuteAsync(
-                    $@"CREATE TABLE {nameof(TestTable)} (
-                            Id INTEGER,
-                            Message TEXT,
-                            PRIMARY KEY(Id)
-                        ) WITHOUT ROWID;
-                        INSERT INTO {nameof(TestTable)}(Id, Message) VALUES (@id, @message);",
-                        new { id = expected.Id, message = expected.Message }
-                );
+                await TestTable.CreateTableAsync(conn);
                 
+                await expected.InsertAsync(conn);
+
                 actual = await conn.QuerySingleOrDefaultAsync<TestTable>(
                     $"SELECT * FROM {nameof(TestTable)} WHERE Id = @id",
                     new { id = expected.Id });
+
+                await TestTable.DropAsync(conn);
             }
 
             //Then
@@ -49,14 +51,31 @@ namespace TLC.Taxi.Data.Test
             Assert.Equal(expected.Id, actual.Id);
             Assert.Equal(expected.Message, actual.Message);
         }
-
-        private TestTable Generate()
+    
+        [Fact]
+        public async Task Get_By_Id()
         {
-            return new TestTable
+            //Given
+            var repo = new SqliteRepository<TestTable, int>(_tempDbPath);
+            TestTable expected = TestTable.Generate();
+
+            //When
+            TestTable actual = null;
+            using (var conn = await repo.OpenAsync(CancellationToken.None))
             {
-                Id = _faker.UniqueIndex,
-                Message = _faker.Database.Random.Words(5),
-            };
+                await TestTable.CreateTableAsync(conn);
+
+                await expected.InsertAsync(conn);
+
+                actual = await repo.GetAsync(expected.Id);
+
+                await TestTable.DropAsync(conn);
+            }
+
+            //Then
+            Assert.NotNull(actual);
+            Assert.Equal(expected.Id, actual.Id);
+            Assert.Equal(expected.Message, actual.Message);
         }
     }
 }

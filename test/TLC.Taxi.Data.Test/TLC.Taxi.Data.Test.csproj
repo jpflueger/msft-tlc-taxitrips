@@ -3,8 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <CollectCoverage>true</CollectCoverage>
-    <CoverletOutputFormat>opencover</CoverletOutputFormat>
-    <CoverletOutput>../TestResults/TLC.Taxi.Data.Test.opencover.xml</CoverletOutput>
+    <CoverletOutputFormat>lcov</CoverletOutputFormat>
+    <CoverletOutput>../TestResults/TLC.Taxi.Data.Test.lcov.info</CoverletOutput>
+    <Exclude>[TLC.Taxi.Data]TLC.Taxi.Data.Models*</Exclude>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

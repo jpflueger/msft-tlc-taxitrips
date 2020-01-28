@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
+using TLC.Taxi.Data.Models;
 
 namespace TLC.Taxi.Data
 {
