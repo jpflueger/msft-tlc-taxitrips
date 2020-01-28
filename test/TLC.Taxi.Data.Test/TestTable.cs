@@ -34,8 +34,6 @@ namespace TLC.Taxi.Data.Test
                             PRIMARY KEY(Id)
                         ) WITHOUT ROWID", trans);
 
-                await conn.ExecuteAsync($@"INSERT INTO {nameof(TestTable)}(Id,Message) VALUES (0,'')");
-
                 await trans.CommitAsync();
             }
         }
@@ -56,7 +54,7 @@ namespace TLC.Taxi.Data.Test
             using (var trans = await connection.BeginTransactionAsync().ConfigureAwait(false))
             {
                 await connection.ExecuteAsync(
-                    @"INSERT INTO TestTable(Id, Message) VALUES (@id, @message);",
+                    $@"INSERT INTO {nameof(TestTable)}(Id, Message) VALUES (@id, @message);",
                     new { id = Id, message = Message }).ConfigureAwait(false);
 
                 await trans.CommitAsync().ConfigureAwait(false);
