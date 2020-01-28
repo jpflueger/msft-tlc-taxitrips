@@ -26,4 +26,4 @@ After you have successfully followed the build instructions. Find the identifier
   - `<to-borough-id>` - the identifier of the borough to which you are traveling
   - `-v Yellow|Green|ForHire` - option to filter by vehicle type
 
-Additional notes can be found in the [Notes.md](Notes.md) file.
+Additional notes can be found in the [NOTES.md](NOTES.md) file.
